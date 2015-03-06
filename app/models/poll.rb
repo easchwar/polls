@@ -28,4 +28,10 @@ class Poll < ActiveRecord::Base
     dependent: :destroy
   )
 
+  has_many(
+    :followers,
+    through: :author,
+    source: :followers
+  )
+
 end

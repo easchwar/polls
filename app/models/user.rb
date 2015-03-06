@@ -27,6 +27,39 @@ class User < ActiveRecord::Base
     dependent: :destroy
   )
 
+  has_many(
+    :follows,
+    class_name: :FollowUser,
+    foreign_key: :being_followed_id,
+    primary_key: :id
+  )
+
+  has_many(
+    :followers,
+    through: :follows,
+    source: :following
+  )
+
+  has_many(
+    :people_following,
+    class_name: :FollowUser,
+    foreign_key: :is_following_id,
+    primary_key: :id
+  )
+
+  has_many(
+    :followees,
+    through: :people_following,
+    source: :followed
+  )
+
+has_many(
+  :followed_polls,
+  through: :followees,
+  source: :authored_polls
+)
+
+
   def completed_polls
     Poll
       .select('polls.*, COUNT(DISTINCT questions.id), COUNT(responses.user_id)')

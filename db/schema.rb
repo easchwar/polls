@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150305191006) do
+ActiveRecord::Schema.define(version: 20150306010343) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -24,6 +24,16 @@ ActiveRecord::Schema.define(version: 20150305191006) do
   end
 
   add_index "answer_choices", ["question_id"], name: "index_answer_choices_on_question_id", using: :btree
+
+  create_table "follow_users", force: :cascade do |t|
+    t.integer  "is_following_id",   null: false
+    t.integer  "being_followed_id", null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "follow_users", ["being_followed_id"], name: "index_follow_users_on_being_followed_id", using: :btree
+  add_index "follow_users", ["is_following_id"], name: "index_follow_users_on_is_following_id", using: :btree
 
   create_table "polls", force: :cascade do |t|
     t.string   "title",      null: false
