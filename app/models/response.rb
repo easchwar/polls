@@ -36,7 +36,25 @@ class Response < ActiveRecord::Base
   )
 
   def sibling_responses
-    question.responses.where(":id IS NULL OR responses.id != :id", id: id)
+
+    heredoc = <<-SQL
+      SELECT
+        responses.*
+      FROM
+        answer_choices AS ac1
+      JOIN
+        questions AS q ON q.id = ac1.question_id
+      JOIN
+        answer_choices AS ac2 ON q.id = ac2.question_id
+      JOIN
+        responses ON responses.answer_choice_id = ac2.id
+      WHERE
+        ac1.id = ? and responses.id != ?
+    SQL
+
+    Response.find_by_sql([heredoc, self.answer_choice_id, self.id])
+
+    # question.responses.where(":id IS NULL OR responses.id != :id", id: id)
   end
 
   private
