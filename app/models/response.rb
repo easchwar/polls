@@ -48,7 +48,33 @@ class Response < ActiveRecord::Base
   end
 
   def respondent_did_not_author_poll
-    if answer_choice.question.poll.user_id == self.user_id
+    # if answer_choice.question.poll.user_id == self.user_id
+    #   errors[:user_id] << "can't respond to own poll"
+    # end
+
+    # heredoc = <<-SQL
+    #   SELECT
+    #     polls.*
+    #   FROM
+    #     answer_choices
+    #   JOIN
+    #     questions ON questions.id = answer_choices.question_id
+    #   JOIN
+    #     polls ON polls.id = questions.poll_id
+    #   WHERE
+    #     answer_choices.id = ?
+    #   LIMIT 1
+    # SQL
+
+    poll = Poll
+      .select('polls.*')
+      .joins(:questions)
+      .joins('JOIN answer_choices ON answer_choices.question_id = questions.id')
+      .where('answer_choices.id = ?', self.answer_choice_id)
+
+    # poll = Poll.find_by_sql([heredoc, self.answer_choice_id]).first
+
+    if poll.first.user_id == self.user_id
       errors[:user_id] << "can't respond to own poll"
     end
   end
