@@ -36,25 +36,12 @@ class Response < ActiveRecord::Base
   )
 
   def sibling_responses
-
-    heredoc = <<-SQL
-      SELECT
-        responses.*
-      FROM
-        answer_choices AS ac1
-      JOIN
-        questions AS q ON q.id = ac1.question_id
-      JOIN
-        answer_choices AS ac2 ON q.id = ac2.question_id
-      JOIN
-        responses ON responses.answer_choice_id = ac2.id
-      WHERE
-        ac1.id = ? and responses.id != ?
-    SQL
-
-    Response.find_by_sql([heredoc, self.answer_choice_id, self.id])
-
-    # question.responses.where(":id IS NULL OR responses.id != :id", id: id)
+    Response
+      .select('responses.*')
+      .joins('JOIN answer_choices AS ac1 ON responses.answer_choice_id = ac1.id')
+      .joins('JOIN questions AS q ON q.id = ac1.question_id')
+      .joins('JOIN answer_choices AS ac2 ON q.id = ac2.question_id')
+      .where('ac2.id = ? and (responses.id != ? OR  ? is NULL)', answer_choice_id, id, id)
   end
 
   private
@@ -66,31 +53,11 @@ class Response < ActiveRecord::Base
   end
 
   def respondent_did_not_author_poll
-    # if answer_choice.question.poll.user_id == self.user_id
-    #   errors[:user_id] << "can't respond to own poll"
-    # end
-
-    # heredoc = <<-SQL
-    #   SELECT
-    #     polls.*
-    #   FROM
-    #     answer_choices
-    #   JOIN
-    #     questions ON questions.id = answer_choices.question_id
-    #   JOIN
-    #     polls ON polls.id = questions.poll_id
-    #   WHERE
-    #     answer_choices.id = ?
-    #   LIMIT 1
-    # SQL
-
     poll = Poll
       .select('polls.*')
       .joins(:questions)
       .joins('JOIN answer_choices ON answer_choices.question_id = questions.id')
       .where('answer_choices.id = ?', self.answer_choice_id)
-
-    # poll = Poll.find_by_sql([heredoc, self.answer_choice_id]).first
 
     if poll.first.user_id == self.user_id
       errors[:user_id] << "can't respond to own poll"
